@@ -1,0 +1,275 @@
+%Unilateral per Rat (All Sessions)
+
+
+%For each rat, Unilat finds IM#, Go Cue Laser, & Unilateral
+for i=1:length(Rats)
+        Unilat=find(ratId==Rats(i) & (SessionType==6)  & SideSess==1); %Go Cue unilateral
+        if Unilat
+        h=figure
+
+        RT_all=[];
+        MT_all=[];
+        Laser_all=[];
+        Contra_Choice_all=[];
+        outcome_all=[];
+         
+    IDX=find(ratId==Rats(i) & SessionType==6 & SideSess==1); %For each rat, session type, Go Cue unilateral
+    % Initialize variables to get the count per session
+    FalseStartsL=zeros(size(IDX));%False starts Laser on
+    FalseStartsnL=zeros(size(IDX));%False starts no Laser
+    FailuretoRespL=zeros(size(IDX));%Failure to respond Laser
+    FailuretoRespnL=zeros(size(IDX));%no Laser
+    PContranL=zeros(size(IDX));%Probability of ipsilateral choice no Laser
+    PContraL=zeros(size(IDX));%Probability of ipsilateral choice Laser
+    %Reward trial n switch/stay trial n+1 Laser trial n
+    rewStL=zeros(size(IDX));%Probability of staying after reward Laser
+    UrewSwL=zeros(size(IDX));%Probability of switching after reward Laser
+    rewStnL=zeros(size(IDX));%Probability of staying after reward no Laser
+    UrewSwnL=zeros(size(IDX));%Probability of switching after reward no Laser
+    %Reward trial n switch/stay trial n+1 Laser trial n+1
+    rewStLx=zeros(size(IDX));%Probability of staying after reward Laser
+    UrewSwLx=zeros(size(IDX));%Probability of switching after reward Laser
+    rewStnLx=zeros(size(IDX));%Probability of staying after reward no Laser
+    UrewSwnLx=zeros(size(IDX));%Probability of switching after reward no lase Laser
+    cou=0;
+     
+%Split Ipsi and Contra Sessions
+
+    for j=IDX
+    cou=cou+1;
+    ratexperience = Allratexp(j);
+    if GLR(j)==1
+        sideTemp=ratexperience.behavData.SessionType{1};
+        LeftSide=strcmp(sideTemp(5), 'L');
+        if LeftSide
+        Contra_Choice=ratexperience.R_choice;
+        else
+        Contra_Choice=ratexperience.L_choice;
+        end
+    else
+        sideTemp=ratexperience.behavData.subject{1};
+        LeftSide=strcmp(sideTemp(8),'L');
+        if LeftSide
+        Contra_Choice=ratexperience.R_choice;
+        else
+        Contra_Choice=ratexperience.L_choice;
+        end
+    end
+    
+        RT_all=[RT_all; ratexperience.ReactionTime];
+        MT_all=[MT_all; ratexperience.MovementTime];
+        Laser_all=[Laser_all; ratexperience.LaserActive];
+        Contra_Choice_all=[Contra_Choice_all; Contra_Choice];
+        outcome_all=[outcome_all; ratexperience.outcome];
+
+%Don't need this but good to have
+
+        FalseStartsnL(cou)=sum([0; diff(ratexperience.behavData.falseStart)] & ratexperience.behavData.LaserActive==0)/sum(ratexperience.behavData.LaserActive==0)*100;
+        FalseStartsL(cou)=sum([0; diff(ratexperience.behavData.falseStart)] & ratexperience.behavData.LaserActive==1)/sum(ratexperience.behavData.LaserActive==1)*100;
+        FailuretoRespnL(cou)=sum([0; diff(ratexperience.behavData.failureToRespond)] & ratexperience.behavData.LaserActive==0)/sum(ratexperience.behavData.LaserActive==0)*100;
+        FailuretoRespL(cou)=sum([0; diff(ratexperience.behavData.failureToRespond)] & ratexperience.behavData.LaserActive==1)/sum(ratexperience.behavData.LaserActive==1)*100;
+        PContranL(cou)=sum(Contra_Choice==1 & ratexperience.LaserActive==0)/sum(ratexperience.LaserActive==0)*100;
+        PContraL(cou)=sum(Contra_Choice==1 & ratexperience.LaserActive==1)/sum(ratexperience.LaserActive==1)*100;
+        
+        %Detect Switching absolute value of choice 1-previos, 
+        %on switch trials index is 1 or -1 absolute val makes them 1
+        switchNTrial=abs(diff(ratexperience.L_choice));
+    
+        %Reward trial n switch/stay trial n+1 Laser trial n
+        %For Ipsi side in trial n 
+        %rewStL(cou)=sum(ratexperience.outcome(1:end-1)==1 & Ipsi_Choice(1:end-1)==1 & switchNTrial==0 & ratexperience.LaserActive(1:end-1)==1)/sum(ratexperience.outcome(1:end-1)==1 & Ipsi_Choice(1:end-1)==1 & ratexperience.LaserActive(1:end-1)==1)*100;
+        %if you want trial n+1 Ipsi_Choice(2:end)==1
+        rewStL(cou)=sum(ratexperience.outcome(1:end-1)==1 & switchNTrial==0 & ratexperience.LaserActive(1:end-1)==1)/sum(ratexperience.outcome(1:end-1)==1 & ratexperience.LaserActive(1:end-1)==1)*100;
+        UrewSwL(cou)=sum(ratexperience.outcome(1:end-1)==0 & switchNTrial==1 & ratexperience.LaserActive(1:end-1)==1)/sum(ratexperience.outcome(1:end-1)==0 & ratexperience.LaserActive(1:end-1)==1)*100;
+        rewStnL(cou)=sum(ratexperience.outcome(1:end-1)==1 & switchNTrial==0 & ratexperience.LaserActive(1:end-1)==0)/sum(ratexperience.outcome(1:end-1)==1 & ratexperience.LaserActive(1:end-1)==0)*100;
+        UrewSwnL(cou)=sum(ratexperience.outcome(1:end-1)==0 & switchNTrial==1 & ratexperience.LaserActive(1:end-1)==0)/sum(ratexperience.outcome(1:end-1)==0 & ratexperience.LaserActive(1:end-1)==0)*100;
+    
+        %Reward trial n switch/stay trial n+1 Laser trial n+1
+        rewStLx(cou)=sum(ratexperience.outcome(1:end-1)==1 & switchNTrial==0 & ratexperience.LaserActive(2:end)==1)/sum(ratexperience.outcome(1:end-1)==1 & ratexperience.LaserActive(2:end)==1)*100;
+        UrewSwLx(cou)=sum(ratexperience.outcome(1:end-1)==0 & switchNTrial==1 & ratexperience.LaserActive(2:end)==1)/sum(ratexperience.outcome(1:end-1)==0 & ratexperience.LaserActive(2:end)==1)*100;
+        rewStnLx(cou)=sum(ratexperience.outcome(1:end-1)==1 & switchNTrial==0 & ratexperience.LaserActive(2:end)==0)/sum(ratexperience.outcome(1:end-1)==1 & ratexperience.LaserActive(2:end)==0)*100;
+        UrewSwnLx(cou)=sum(ratexperience.outcome(1:end-1)==0 & switchNTrial==1 & ratexperience.LaserActive(2:end)==0)/sum(ratexperience.outcome(1:end-1)==0 & ratexperience.LaserActive(2:end)==0)*100;
+        
+    end
+
+
+%Aggregating All Reaction Time
+
+ xA=RT_all;
+%Plotting 4 Plots of Reaction Time & Movement Time 
+
+%     subplot('Position',[HorStartP+(HorBreak+plotWidth)*2 VerStartP+(VerBreak+plotHeight)*2 plotWidth plotHeight])
+    
+    subplot(2, 2, 1); % 2x2 grid, first plot
+
+    idx=find(Laser_all==0 & Contra_Choice_all==1);
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineWidth',2);hold on
+        end
+    idx=find(Laser_all==0 & Contra_Choice_all==0);
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+        end
+    idx=find(Laser_all==1 & Contra_Choice_all==1);
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8],'LineStyle',':', 'LineWidth',2);hold on
+        end
+    idx=find(Laser_all==1 & Contra_Choice_all==0);
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineStyle',':', 'LineWidth',2);hold on
+        end
+
+    legend({'Contra' 'Ipsi' 'Contra-Laser' 'Ipsi-Laser'}, 'Location','southeast')
+    title('Go Cue_{Unilateral} RT_{n} Laser_{n}')
+
+
+%Laser On/Off, Rewarded, Contra Vs Ipsi
+
+    %subplot('Position',[HorStartP+(HorBreak+plotWidth)*3 VerStartP+(VerBreak+plotHeight)*2 plotWidth plotHeight])
+    subplot(2, 2, 2); % 2x2 grid, first plot
+       
+    idx=find(Laser_all(2:end)==0 & outcome_all(1:end-1)==1 & Contra_Choice_all(2:end)==1)+1;
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+        end
+    idx=find(Laser_all(2:end)==0 & outcome_all(1:end-1)==1 & Contra_Choice_all(2:end)==0)+1;
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineWidth',2);hold on
+        end
+    idx=find(Laser_all(2:end)==1 & outcome_all(1:end-1)==1 & Contra_Choice_all(2:end)==1)+1;
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0],'LineStyle',':', 'LineWidth',2);hold on
+        end
+    idx=find(Laser_all(2:end)==1 & outcome_all(1:end-1)==1 & Contra_Choice_all(2:end)==0)+1;
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineStyle',':', 'LineWidth',2);hold on
+        end
+
+    %URew
+    idx=find(Laser_all(2:end)==0 & outcome_all(1:end-1)==0 & Contra_Choice_all(2:end)==1)+1;
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .4 0], 'LineWidth',2);hold on
+        end
+    idx=find(Laser_all(2:end)==0 & outcome_all(1:end-1)==0 & Contra_Choice_all(2:end)==0)+1;
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.4 0 .4], 'LineWidth',2);hold on
+        end
+    idx=find(Laser_all(2:end)==1 & outcome_all(1:end-1)==0 & Contra_Choice_all(2:end)==1)+1;
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .4 0],'LineStyle',':', 'LineWidth',2);hold on
+        end
+    idx=find(Laser_all(2:end)==1 & outcome_all(1:end-1)==0 & Contra_Choice_all(2:end)==0)+1;
+        if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.4 0 .4], 'LineStyle',':', 'LineWidth',2);hold on
+        end
+    legend({'Rew-Left' 'Rew-Right' 'Rew-Left-Laser' 'Rew-Right-Laser' 'URew-Left' 'URew-Right' 'URew-Left-Laser' 'URew-Right-Laser'}, 'Location','southeast')
+    title('RT_{n} Laser_{n} Rew/UR_{n-1} I/C_{n}')
+
+xA=MT_all;
+    %subplot('Position',[HorStartP+(HorBreak+plotWidth)*2 VerStartP+(VerBreak+plotHeight) plotWidth plotHeight])
+    subplot(2, 2, 3); % 2x2 grid, first plot
+    idx=find(Laser_all==0 & Contra_Choice_all==1);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineWidth',2);hold on
+    end
+    idx=find(Laser_all==0 & Contra_Choice_all==0);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+    end
+
+    idx=find(Laser_all==1 & Contra_Choice_all==1);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8],'LineStyle',':', 'LineWidth',2);hold on
+    end
+    idx=find(Laser_all==1 & Contra_Choice_all==0);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineStyle',':', 'LineWidth',2);hold on
+    end
+
+    legend({'Contra' 'Ipsi' 'Contra-Laser' 'Ipsi-Laser'}, 'Location','southeast')
+    title('Go Cue_{Unilateral} MT_{n} Laser_{n}')
+
+
+    %subplot('Position',[HorStartP+(HorBreak+plotWidth)*3 VerStartP+(VerBreak+plotHeight) plotWidth plotHeight])
+    subplot(2, 2, 4); % 2x2 grid, first plot
+    idx=find(Laser_all(2:end)==0 & outcome_all(1:end-1)==1 & Contra_Choice_all(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+    end
+    idx=find(Laser_all(2:end)==0 & outcome_all(1:end-1)==1 & Contra_Choice_all(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineWidth',2);hold on
+    end
+    idx=find(Laser_all(2:end)==1 & outcome_all(1:end-1)==1 & Contra_Choice_all(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0],'LineStyle',':', 'LineWidth',2);hold on
+    end
+    idx=find(Laser_all(2:end)==1 & outcome_all(1:end-1)==1 & Contra_Choice_all(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineStyle',':', 'LineWidth',2);hold on
+    end
+
+    %URew
+    idx=find(Laser_all(2:end)==0 & outcome_all(1:end-1)==0 & Contra_Choice_all(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .4 0], 'LineWidth',2);hold on
+    end
+    idx=find(Laser_all(2:end)==0 & outcome_all(1:end-1)==0 & Contra_Choice_all(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.4 0 .4], 'LineWidth',2);hold on
+    end
+    idx=find(Laser_all(2:end)==1 & outcome_all(1:end-1)==0 & Contra_Choice_all(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .4 0],'LineStyle',':', 'LineWidth',2);hold on
+    end
+    idx=find(Laser_all(2:end)==1 & outcome_all(1:end-1)==0 & Contra_Choice_all(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.4 0 .4], 'LineStyle',':', 'LineWidth',2);hold on
+    end
+    legend({'Rew-Left' 'Rew-Right' 'Rew-Left-Laser' 'Rew-Right-Laser' 'URew-Left' 'URew-Right' 'URew-Left-Laser' 'URew-Right-Laser'}, 'Location','southeast')
+    title('MT_{n} Laser_{n} Rew/UR_{n-1} I/C_{n}')
+
+
+set(h, 'Units', 'inches');
+figPosition = get(h, 'Position');           % get current figure size
+width = 11;  % Letter size landscape width
+height = 8.5; % Letter size landscape height
+set(h, 'PaperOrientation', 'landscape');
+set(h, 'PaperUnits', 'inches');
+set(h, 'PaperPosition', [0 0 width height]);
+set(h, 'PaperSize', [width height]);
+
+% Save as PDF
+print('-dpdf','-painters',[ratexperience.behavData.subject{1,1} '_' ratexperience.behavData.date{1,1} '_curated_' datestr(now, 'yyyy-mm-dd')])
+ 
+        end
+
+
+
+end
+
+

@@ -1,0 +1,459 @@
+function PlotOptoBehSummary(ratexperience)
+    logId=1;
+    TrialCodes={'Control' 'CenterLightOn' 'Side In' 'NA' 'CenterNoseIn' 'ITI' 'Go Cue' 'CenterOut' 'SideOut' 'Food In'};%Asigned from index in lab view VI
+
+    fntSz=9;
+
+    RLColors = [0 0 1; 1 0 0;.5 .5 .5];
+    ColScale=[.2 .7 1];
+
+    
+    plotWidth= 0.2;
+    plotHeight=0.27;
+
+    VerStartP=0.05;
+    VerBreak=0.05;
+
+    HorStartP=0.05;
+    HorBreak=0.03;
+
+    %Description of behavior
+    subplot('Position',[HorStartP+(HorBreak+plotWidth)*3 VerStartP+VerBreak plotWidth plotHeight], 'Visible', 'off')
+
+    %text(0, .7, {ratexperience.session_info [ratexperience.behavData.SessionType{1,1} '-' TrialCodes{ratexperience.behavData.LaserTrialCode(1,1)+1}]}, 'FontSize',12,'FontWeight','bold');%, Unit(unit).Type, Unit(unit).Area
+    text(0, .7, {ratexperience.session_info }, 'FontSize',12,'FontWeight','bold');%, Unit(unit).Type, Unit(unit).Area
+
+    switchNTrial=abs(diff(ratexperience.L_choice));
+    switchNTrialSd=(diff(ratexperience.L_choice));
+
+    %Reward trial n switch/stay trial n+1 Laser trial n
+    rewStL=sum(ratexperience.outcome(1:end-1)==1 & switchNTrial==0 & ratexperience.LaserActive(1:end-1)==1)/sum(ratexperience.outcome(1:end-1)==1 & ratexperience.LaserActive(1:end-1)==1)*100;
+
+    UrewSwL=sum(ratexperience.outcome(1:end-1)==0 & switchNTrial==1 & ratexperience.LaserActive(1:end-1)==1)/sum(ratexperience.outcome(1:end-1)==0 & ratexperience.LaserActive(1:end-1)==1)*100;
+
+    rewStnL=sum(ratexperience.outcome(1:end-1)==1 & switchNTrial==0 & ratexperience.LaserActive(1:end-1)==0)/sum(ratexperience.outcome(1:end-1)==1 & ratexperience.LaserActive(1:end-1)==0)*100;
+
+    UrewSwnL=sum(ratexperience.outcome(1:end-1)==0 & switchNTrial==1 & ratexperience.LaserActive(1:end-1)==0)/sum(ratexperience.outcome(1:end-1)==0 & ratexperience.LaserActive(1:end-1)==0)*100;
+
+    %Reward trial n switch/stay trial n+1 Laser trial n+1
+    rewStLx=sum(ratexperience.outcome(1:end-1)==1 & switchNTrial==0 & ratexperience.LaserActive(2:end)==1)/sum(ratexperience.outcome(1:end-1)==1 & ratexperience.LaserActive(2:end)==1)*100;
+
+    UrewSwLx=sum(ratexperience.outcome(1:end-1)==0 & switchNTrial==1 & ratexperience.LaserActive(2:end)==1)/sum(ratexperience.outcome(1:end-1)==0 & ratexperience.LaserActive(2:end)==1)*100;
+
+    rewStnLx=sum(ratexperience.outcome(1:end-1)==1 & switchNTrial==0 & ratexperience.LaserActive(2:end)==0)/sum(ratexperience.outcome(1:end-1)==1 & ratexperience.LaserActive(2:end)==0)*100;
+
+    UrewSwnLx=sum(ratexperience.outcome(1:end-1)==0 & switchNTrial==1 & ratexperience.LaserActive(2:end)==0)/sum(ratexperience.outcome(1:end-1)==0 & ratexperience.LaserActive(2:end)==0)*100;
+
+    FalseStartsnL=sum([0; diff(ratexperience.behavData.falseStart)] & ratexperience.behavData.LaserActive==0)/sum(ratexperience.behavData.LaserActive==0)*100;
+    FalseStartsL=sum([0; diff(ratexperience.behavData.falseStart)] & ratexperience.behavData.LaserActive==1)/sum(ratexperience.behavData.LaserActive==1)*100;
+
+    FailureToRespondnL=sum([0; diff(ratexperience.behavData.failureToRespond)] & ratexperience.behavData.LaserActive==0)/sum(ratexperience.behavData.LaserActive==0)*100;
+    FailureToRespondL=sum([0; diff(ratexperience.behavData.failureToRespond)] & ratexperience.behavData.LaserActive==1)/sum(ratexperience.behavData.LaserActive==1)*100;
+
+    PLeftnL=sum(ratexperience.L_choice==1 & ratexperience.LaserActive==0)/sum(ratexperience.LaserActive==0)*100;
+    PLeftL=sum(ratexperience.L_choice==1 & ratexperience.LaserActive==1)/sum(ratexperience.LaserActive==1)*100;
+
+    varText={['Attempts:' num2str(ratexperience.behavData.attempt(end),3) ' Trials:' num2str(ratexperience.TrialNumber(end),3) ' L:' num2str(sum(ratexperience.L_choice==1),3) ' R:' num2str(sum(ratexperience.R_choice==1),3)]...
+        ['False Starts:' num2str(FalseStartsnL, 2) '% False Starts + Stim:' num2str(FalseStartsL, 2) '%']...
+        ['Failure To Respond:' num2str(FailureToRespondnL, 2) '% Failure To Respond + Stim:' num2str(FailureToRespondL, 2) '%']...
+        ['P_L:' num2str(PLeftnL, 2) '% P_L +Stim: ' num2str(PLeftL, 2) '%']...
+        ['R_{n-1} Stay:' num2str(rewStnL, 2) '% (R+Stim)_{n-1} Stay:' num2str(rewStL, 2) '%']...
+        ['UR_{n-1} Switch:' num2str(UrewSwnL, 2) '% (UR+Stim)_{n-1} Switch:' num2str(UrewSwL, 2) '%']...
+        ['R_{n-1} Stay:' num2str(rewStnLx, 2) '% R_{n-1} +Stim_{n} Stay:' num2str(rewStLx, 2) '%']...
+        ['UR_{n-1} Switch:' num2str(UrewSwnLx, 2) '% UR_{n-1} +Stim_{n} Switch:' num2str(UrewSwLx, 2) '%']};
+
+    text(0, .3, varText, 'FontSize',(fntSz+2));
+
+    if logId
+        xA=log10(ratexperience.CNIlatency); %take CNI of all trials even with procedural Errors
+    else
+        xA=(ratexperience.CNIlatefncy); %take CNI of all trials even with procedural Errors
+    end
+
+    scale=ratexperience.leaky_intigrator_TRIAL_Rrate;
+    [~,~,bin] = histcounts(scale,quantile(scale,[0 1/3 2/3 1]));
+    split=ratexperience.outcome;
+
+    subplot('Position',[HorStartP VerStartP+(VerBreak+plotHeight)*2 plotWidth plotHeight])
+    idx=find(ratexperience.LaserActive==0);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 0 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive==1);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+        legend({'Control' 'Laser'}, 'Location','southeast')
+    end
+    title('CNI_{n} Laser_{n}')
+
+    ax=gca;
+    xlim([1.5 5])
+    ax.XTick=[2 3 4];
+    ax.XTickLabel={'0.1' '1' '10'};
+    ax.YTick=[0 1];
+    set(ax, 'FontSize',fntSz)
+    xlabel('Time (s)')
+    ax.TickDir='out';
+    box off
+
+    subplot('Position',[HorStartP VerStartP+(VerBreak+plotHeight)*1 plotWidth plotHeight])
+    idx=find(ratexperience.LaserActive(2:end)==0 & ratexperience.outcome(1:end-1)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[1 0 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(2:end)==1 & ratexperience.outcome(1:end-1)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[1 .8 0], 'LineWidth',2);hold on
+    end
+    %URew
+    idx=find(ratexperience.LaserActive(2:end)==0 & ratexperience.outcome(1:end-1)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 0 1], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(2:end)==1 & ratexperience.outcome(1:end-1)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 1], 'LineWidth',2);hold on
+    end
+    legend({'Rew' 'Rew-Laser' 'URew' 'URew-Laser'}, 'Location','southeast')
+    title('CNI_{n} Laser_{n} Rew/UR_{n-1}')
+
+    ax=gca;
+    xlim([1.5 5])
+    ax.XTick=[2 3 4];
+    ax.XTickLabel={'0.1' '1' '10'};
+    ax.YTick=[0 1];
+    set(ax, 'FontSize',fntSz)
+    xlabel('Time (s)')
+    ax.TickDir='out';
+    box off
+
+    subplot('Position',[HorStartP VerStartP plotWidth plotHeight])
+    %Rew
+    idx=find(ratexperience.LaserActive(1:end-1)==0 & ratexperience.outcome(1:end-1)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[1 0 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(1:end-1)==1 & ratexperience.outcome(1:end-1)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[1 .8 0], 'LineWidth',2);hold on
+    end
+    %URew
+    idx=find(ratexperience.LaserActive(1:end-1)==0 & ratexperience.outcome(1:end-1)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 0 1], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(1:end-1)==1 & ratexperience.outcome(1:end-1)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 1], 'LineWidth',2);hold on
+    end
+    legend({'Rew' 'Rew-Laser' 'URew' 'URew-Laser'}, 'Location','southeast')
+    title('CNI_{n+1} Laser_{n} Rew/UR_{n}')
+
+    ax=gca;
+    xlim([1.5 5])
+    ax.XTick=[2 3 4];
+    ax.XTickLabel={'0.1' '1' '10'};
+    ax.YTick=[0 1];
+    set(ax, 'FontSize',fntSz)
+    xlabel('Time (s)')
+    ax.TickDir='out';
+    box off
+
+    xA=(ratexperience.ReactionTime);
+    
+    subplot('Position',[HorStartP+(HorBreak+plotWidth) VerStartP+(VerBreak+plotHeight)*2 plotWidth plotHeight])
+    idx=find(ratexperience.LaserActive==0);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 0 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive==1);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+        legend({'Control' 'Laser'}, 'Location','southeast')
+    end
+    title('RT_{n} Laser_{n}')
+
+    ax=gca;
+    xlim([0 800])
+    ax.XTick=[0 200 400 600];
+    ax.YTick=[0 1];
+    set(ax, 'FontSize',fntSz)
+    xlabel('Time (ms)')
+    ax.TickDir='out';
+    box off
+
+    subplot('Position',[HorStartP+(HorBreak+plotWidth)*3 VerStartP+(VerBreak+plotHeight)*2 plotWidth plotHeight])
+    idx=find(ratexperience.LaserActive(1:end-1)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 0 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(1:end-1)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+        legend({'Control' 'Laser'}, 'Location','southeast')
+    end
+    title('RT_{n+1} Laser_{n}')
+
+    ax=gca;
+    xlim([0 800])
+    ax.XTick=[0 200 400 600];
+    ax.YTick=[0 1];
+    set(ax, 'FontSize',fntSz)
+    xlabel('Time (ms)')
+    ax.TickDir='out';
+    box off
+
+    subplot('Position',[HorStartP+(HorBreak+plotWidth) VerStartP+(VerBreak+plotHeight)*1 plotWidth plotHeight])
+    %L
+    idx=find(ratexperience.LaserActive(1:end-1)==0 & ratexperience.L_choice(1:end-1)==1);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(1:end-1)==1 & ratexperience.L_choice(1:end-1)==1);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineStyle', ':', 'LineWidth',2);hold on
+    end
+    %R
+    idx=find(ratexperience.LaserActive(1:end-1)==0 & ratexperience.L_choice(1:end-1)==0);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(1:end-1)==1 & ratexperience.L_choice(1:end-1)==0);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineStyle', ':','LineWidth',2);hold on
+        legend({'L' 'L-Laser' 'R' 'R-Laser'}, 'Location','southeast')
+    end
+    title('RT_{n} Laser_{n} L/R_{n}')
+
+    ax=gca;
+    xlim([0 800])
+    ax.XTick=[0 200 400 600];
+    ax.YTick=[0 1];
+    set(ax, 'FontSize',fntSz)
+    xlabel('Time (ms)')
+    ax.TickDir='out';
+    box off
+
+    subplot('Position',[HorStartP+(HorBreak+plotWidth) VerStartP plotWidth plotHeight])
+    idx=find(ratexperience.LaserActive(2:end)==0 & ratexperience.outcome(1:end-1)==1 & ratexperience.L_choice(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(2:end)==0 & ratexperience.outcome(1:end-1)==1 & ratexperience.L_choice(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineWidth',2);hold on
+    end
+
+    idx=find(ratexperience.LaserActive(2:end)==1 & ratexperience.outcome(1:end-1)==1 & ratexperience.L_choice(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0],'LineStyle',':', 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(2:end)==1 & ratexperience.outcome(1:end-1)==1 & ratexperience.L_choice(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineStyle',':', 'LineWidth',2);hold on
+    end
+
+    %URew
+    idx=find(ratexperience.LaserActive(2:end)==0 & ratexperience.outcome(1:end-1)==0 & ratexperience.L_choice(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .4 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(2:end)==0 & ratexperience.outcome(1:end-1)==0 & ratexperience.L_choice(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.4 0 .4], 'LineWidth',2);hold on
+    end
+
+    idx=find(ratexperience.LaserActive(2:end)==1 & ratexperience.outcome(1:end-1)==0 & ratexperience.L_choice(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .4 0],'LineStyle',':', 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(2:end)==1 & ratexperience.outcome(1:end-1)==0 & ratexperience.L_choice(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.4 0 .4], 'LineStyle',':', 'LineWidth',2);hold on
+    end
+
+    legend({'Rew-Left' 'Rew-Right' 'Rew-Left-Laser' 'Rew-Right-Laser' 'URew-Left' 'URew-Right' 'URew-Left-Laser' 'URew-Right-Laser'}, 'Location','southeast')
+    title('RT_{n} Laser_{n} Rew/UR_{n-1} L/R_{n}')
+
+    ax=gca;
+    xlim([0 800])
+    ax.XTick=[0 200 400 600];
+    ax.YTick=[0 1];
+    set(ax, 'FontSize',fntSz)
+    xlabel('Time (ms)')
+    ax.TickDir='out';
+    box off
+
+    xA=(ratexperience.MovementTime); %take CNI of all trials even with procedural Errors
+
+    scale=ratexperience.leaky_intigrator_TRIAL_Rrate;
+    [~,~,bin] = histcounts(scale,quantile(scale,[0 1/3 2/3 1]));
+    split=ratexperience.outcome;
+
+    subplot('Position',[HorStartP+(HorBreak+plotWidth)*2 VerStartP+(VerBreak+plotHeight)*2 plotWidth plotHeight])
+    idx=find(ratexperience.LaserActive==0);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 0 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive==1);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+        legend({'Control' 'Laser'}, 'Location','southeast')
+    end
+    title('MT_{n} Laser_{n}')
+
+    ax=gca;
+    xlim([0 800])
+    ax.XTick=[0 200 400 600];
+    ax.YTick=[0 1];
+    set(ax, 'FontSize',fntSz)
+    xlabel('Time (ms)')
+    ax.TickDir='out';
+    box off
+
+    subplot('Position',[HorStartP+(HorBreak+plotWidth)*3 VerStartP+(VerBreak+plotHeight) plotWidth plotHeight])
+    idx=find(ratexperience.LaserActive(1:end-1)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 0 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(1:end-1)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+        legend({'Control' 'Laser'}, 'Location','southeast')
+    end
+    title('MT_{n+1} Laser_{n}')
+
+    ax=gca;
+    xlim([0 800])
+    ax.XTick=[0 200 400 600];
+    ax.YTick=[0 1];
+    set(ax, 'FontSize',fntSz)
+    xlabel('Time (ms)')
+    ax.TickDir='out';
+    box off
+
+    subplot('Position',[HorStartP+(HorBreak+plotWidth)*2 VerStartP plotWidth plotHeight])
+
+        idx=find(ratexperience.LaserActive(2:end)==0 & ratexperience.outcome(1:end-1)==1 & ratexperience.L_choice(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(2:end)==0 & ratexperience.outcome(1:end-1)==1 & ratexperience.L_choice(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineWidth',2);hold on
+    end
+
+    idx=find(ratexperience.LaserActive(2:end)==1 & ratexperience.outcome(1:end-1)==1 & ratexperience.L_choice(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0],'LineStyle',':', 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(2:end)==1 & ratexperience.outcome(1:end-1)==1 & ratexperience.L_choice(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineStyle',':', 'LineWidth',2);hold on
+    end
+
+    %URew
+    idx=find(ratexperience.LaserActive(2:end)==0 & ratexperience.outcome(1:end-1)==0 & ratexperience.L_choice(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .4 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(2:end)==0 & ratexperience.outcome(1:end-1)==0 & ratexperience.L_choice(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.4 0 .4], 'LineWidth',2);hold on
+    end
+
+    idx=find(ratexperience.LaserActive(2:end)==1 & ratexperience.outcome(1:end-1)==0 & ratexperience.L_choice(2:end)==1)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .4 0],'LineStyle',':', 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive(2:end)==1 & ratexperience.outcome(1:end-1)==0 & ratexperience.L_choice(2:end)==0)+1;
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.4 0 .4], 'LineStyle',':', 'LineWidth',2);hold on
+    end
+
+    legend({'Rew-Left' 'Rew-Right' 'Rew-Left-Laser' 'Rew-Right-Laser' 'URew-Left' 'URew-Right' 'URew-Left-Laser' 'URew-Right-Laser'}, 'Location','southeast')
+    title('MT_{n} Laser_{n} Rew/UR_{n-1} L/R_{n}')
+
+    ax=gca;
+    xlim([0 800])
+    ax.XTick=[0 200 400 600];
+    ax.YTick=[0 1];
+    set(ax, 'FontSize',fntSz)
+    xlabel('Time (ms)')
+    ax.TickDir='out';
+    box off
+
+    subplot('Position',[HorStartP+(HorBreak+plotWidth)*2 VerStartP+(VerBreak+plotHeight) plotWidth plotHeight])
+    %Rew
+    idx=find(ratexperience.LaserActive==0 & ratexperience.L_choice==1);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive==1 & ratexperience.L_choice==1);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[0 .8 0], 'LineStyle', ':', 'LineWidth',2);hold on
+    end
+    %URew
+    idx=find(ratexperience.LaserActive==0 & ratexperience.L_choice==0);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineWidth',2);hold on
+    end
+    idx=find(ratexperience.LaserActive==1 & ratexperience.L_choice==0);
+    if ~isempty(idx)
+        [y, x]=ecdf(xA(idx));
+        plot(x,y, 'Color',[.8 0 .8], 'LineStyle', ':','LineWidth',2);hold on
+        legend({'L' 'L-Laser' 'R' 'R-Laser'}, 'Location','southeast')
+    end
+    title('MT_{n} Laser_{n} L/R_{n}')
+
+    ax=gca;
+    xlim([0 800])
+    ax.XTick=[0 200 400 600];
+    ax.YTick=[0 1];
+    set(ax, 'FontSize',fntSz)
+    xlabel('Time (ms)')
+    ax.TickDir='out';
+    box off
+
+end

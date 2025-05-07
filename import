@@ -1,0 +1,110 @@
+close all;
+clear all;
+
+PathName='/Users/kyoungjunkim/Desktop/Data/allrats';
+files=dir([PathName,filesep '*.log']);
+clear Allratexp
+
+%Rig
+for i=1:length(files)
+    ratId(i)=str2num(files(i).name(4:7));
+    clear tempCellArray
+    fid = fopen([PathName,filesep,files(i).name]);
+    tempCellArray = textscan(fid, 'Subject:%s Date:%s Time:%s Attempt:%u16 Trial:%u16 Food:%u16 Block:%u16 Block trial:%u16 Center:%u8 Port poked:%u16 RT:%u16 MT:%u16 PreT:%u16 ResponseLimit:%u16 TrPerBlock:%u16 FalseStart:%u16 WrongStart:%u16 FailureToRespond:%u16 Prob Left:%u16 Prob Right:%u16 Target Poke:%u16 CNI Latency:%u16 ITI:%u16 LaserTrial:%u16 Stim Type:%u16 Stim Prob:%u16 Stim Time:%u16 Laser Current:%u16 Laser Voltage:%u16 Pre Cue wait:%u16 Post Cue:%u16 Pulse Duration:%u16' ,'MultipleDelimsAsOne',1);
+    fclose(fid);
+    GLR(i)=0
+
+%GLR
+    if isempty(tempCellArray{27})
+    GLR(i)=1
+    fid = fopen([PathName,filesep,files(i).name]);
+    tempCellArray = textscan(fid, 'Subject:%s Date:%s Time:%s Attempt:%u16 Trial:%u16 Food:%u16 Block:%u16 Block trial:%u16 Center:%u8 Port poked:%u16 RT:%u16 MT:%u16 PreT:%u16 ResponseLimit:%u16 TrPerBlock:%u16 FalseStart:%u16 WrongStart:%u16 FailureToRespond:%u16 Prob Left:%u16 Prob Right:%u16 Target Poke:%u16 CNI Latency:%u16  SI Duration: %u16 ITI:%u16 TTR: %u16 Session Type:%s Number of pulses: %u16 Pulse width:%u16 Amplitude: %u16 Laser Active:   %u16 Laser trial code:%u16 ','MultipleDelimsAsOne',1);
+    fclose(fid);
+    end
+
+
+    if ~isempty(tempCellArray{24})
+    behavData.filename = files(i).name;
+    behavData.subject = tempCellArray{1};
+    behavData.date = tempCellArray{2};
+    behavData.time = tempCellArray{3};
+    behavData.attempt = double(tempCellArray{4});
+    behavData.trial = double(tempCellArray{5});
+    behavData.food = double(tempCellArray{6});
+    behavData.block = double(tempCellArray{7});
+    behavData.blockTrial = double(tempCellArray{8});
+    behavData.center = double(tempCellArray{9});
+    behavData.portPoked = double(tempCellArray{10});
+    behavData.RT = double(tempCellArray{11});
+    behavData.MT = double(tempCellArray{12});
+    behavData.PreT = double(tempCellArray{13});
+    behavData.responseLimit = double(tempCellArray{14});
+    behavData.trPerBlock = double(tempCellArray{15});
+    behavData.falseStart = double(tempCellArray{16});
+    behavData.wrongStart = double(tempCellArray{17});
+    behavData.failureToRespond = double(tempCellArray{18});
+    behavData.probLeft = double(tempCellArray{19});
+    behavData.probRight = double(tempCellArray{20});
+    behavData.targetPoke = double(tempCellArray{21});
+    behavData.CNIlatency = double(tempCellArray{22});   
+    if GLR(i) == 0
+    behavData.ITI = double(tempCellArray{23});
+    behavData.LaserActive = double(tempCellArray{24});
+    behavData.LaserTrialCode = double(tempCellArray{25});
+    behavData.StimProb = double(tempCellArray{26});
+    behavData.pulseWidth = double(tempCellArray{27});
+    behavData.LaserCurrent = double(tempCellArray{28});
+    behavData.LaserVoltage = double(tempCellArray{29});
+    behavData.PreCuewait = double(tempCellArray{30});
+    behavData.PostCue = double(tempCellArray{31});
+    behavData.pulseWidth= double(tempCellArray{32}); 
+    else
+    behavData.SIDuration = double(tempCellArray{23});
+    behavData.ITI = double(tempCellArray{24});
+    behavData.TTR = double(tempCellArray{25});
+    behavData.SessionType = tempCellArray{26};
+    behavData.pulseWidth = double(tempCellArray{28});
+    behavData.LaserActive = double(tempCellArray{30});
+    behavData.LaserTrialCode = double(tempCellArray{31});
+    end
+    ratexperience = behavDatatoratexp( behavData );
+    ratexperience= estimate_rewrate(ratexperience);
+    ratexperience.SessionType = behavData.LaserTrialCode(1);
+    ratexperience.validTrial =  find(diff([0; behavData.trial]) == 1);
+    ratexperience.LaserActive=behavData.LaserActive(ratexperience.validTrial);
+    ratexperience.laserTrials=find(behavData.LaserActive(ratexperience.validTrial));
+    ratexperience.NolaserTrials=find(behavData.LaserActive(ratexperience.validTrial)==0);
+    Allratexp(i)=ratexperience;
+    SessionType(i)=ratexperience.SessionType;
+    clear ratexperience
+    clear behavData
+    end
+
+end
+
+%%
+
+for i=1:length(Allratexp)
+    if GLR(i)==1
+        sideTemp=Allratexp(i).behavData.SessionType{1}; 
+        if strlength(sideTemp)>3 
+            SideSess(i)=1;
+        else
+            SideSess(i)=0;
+        end
+    else
+        sideTemp=Allratexp(i).behavData.subject{1};
+            if strlength(sideTemp)>7
+          SideSess(i)=1;
+            else
+          SideSess(i)=0;
+            end    
+    end
+end
+
+TrialCodes={'Control' 'CenterLightOn' 'Side In' 'NA' 'CenterNoseIn' 'ITI' 'Go Cue' 'CenterOut' 'SideOut' 'Food In'};%Asigned from index in lab view VI
+
+Rats=unique(ratId);
+count=1;
+clear input_list
+   

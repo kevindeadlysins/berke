@@ -1,0 +1,118 @@
+function ratexperience = estimate_rewrate(varargin)
+
+%Run script as estimate_rewrate(ratexperience), MUST HAVE ratexperience.CNIlatency
+%The script will automatically select tau and nu to best fit latency
+%otherwise, user can enter custom tau and nu as:
+%              estimate_rewrate(ratexperience,tau,nu)
+
+
+if nargin ==1
+    ratexperience = varargin{1};
+    no_tau = 1;
+    no_nu = 1;
+elseif nargin ==2
+    ratexperience = varargin{1};
+    no_tau = 0;tau = varargin{2};
+     no_nu = 1;
+ elseif nargin ==3
+    ratexperience = varargin{1};
+    if varargin{2}==0;
+         no_tau = 1;
+    else
+    no_tau = 0;tau = varargin{2};
+    end
+    no_nu = 0;nu = varargin{3};
+end
+
+trial_rows = find(diff([0;ratexperience.behavData.trial])==1);
+
+
+trialtime = datenum(ratexperience.behavData.time(trial_rows));
+
+clear elsapsedtime
+for i = 1:length(trialtime)-1
+elsapsedtime(i) = round(etime(datevec(trialtime(i+1)),datevec(trialtime(i))));
+end
+ratexperience.elsapsedtime = [1 elsapsedtime]';
+ratexperience.runningtime = cumsum(ratexperience.elsapsedtime);
+
+ratexperience.TIME_based_outcome = zeros(ratexperience.runningtime(end),1);
+ratexperience.TIME_based_trialcount = zeros(ratexperience.runningtime(end),1);
+ratexperience.TIME_based_trialcount(ratexperience.runningtime) = diff([0;ratexperience.TrialNumber]); 
+ratexperience.TIME_based_outcome(ratexperience.runningtime) = ratexperience.outcome;
+
+
+numiter = 321; %number of fit combinations
+nurg = [0.0002 0.4]; %range to fit
+
+taurg = [30 350]; %range to fit
+
+if no_tau & no_nu
+            tau = taurg(1):taurg(2);nu = linspace(nurg(1),nurg(2),numiter);
+            clear corr_to_lat
+            for fits = 1:numiter
+            ratexperience =  do_a_loop(ratexperience,tau(fits),nu(fits));
+            corr_to_lat(fits,:) = [ratexperience.leaky_corr_to_lat ratexperience.avgRew_RL_corr_to_lat];
+            end
+            
+            ratexperience.best_tau = tau(find(corr_to_lat(:,1)==min(corr_to_lat(:,1))));
+            ratexperience.best_nu = nu(find(corr_to_lat(:,2)==min(corr_to_lat(:,2))));
+elseif no_tau 
+            tau = taurg(1):taurg(2);
+            clear corr_to_lat
+            for fits = 1:numiter
+            ratexperience =  do_a_loop(ratexperience,tau(fits),nu);
+             corr_to_lat(fits,:) = [ratexperience.leaky_corr_to_lat ratexperience.avgRew_RL_corr_to_lat];
+            end
+            ratexperience.best_tau = tau(find(corr_to_lat(:,1)==min(corr_to_lat(:,1))));
+            ratexperience.best_nu = nu;
+elseif no_nu
+            nu = linspace(nurg(1),nurg(2),numiter);
+            clear corr_to_lat
+            for fits = 1:numiter
+            ratexperience =  do_a_loop(ratexperience,tau,nu(fits));
+            corr_to_lat(fits,:) = [ratexperience.leaky_corr_to_lat ratexperience.avgRew_RL_corr_to_lat];
+            end
+            ratexperience.best_tau = tau;
+            ratexperience.best_nu = nu(find(corr_to_lat(:,2)==min(corr_to_lat(:,2))));
+else
+            clear corr_to_lat
+            for fits = 1:numiter
+            ratexperience =  do_a_loop(ratexperience,tau,nu);
+            corr_to_lat(fits,:) = [ratexperience.leaky_corr_to_lat ratexperience.avgRew_RL_corr_to_lat];
+            end
+            ratexperience.best_tau = tau;
+            ratexperience.best_nu = nu;
+    
+end
+
+
+ratexperience =  do_a_loop(ratexperience,ratexperience.best_tau,ratexperience.best_nu);
+
+
+                    function ratexperience =  do_a_loop(ratexperience,tau,nu)
+                        ratexperience.leaky_intigrator_Rrate(1) = ratexperience.TIME_based_outcome(1);
+                        ratexperience.avgRew_RL_Rrate(1)=0; 
+
+                        for i = 2:ratexperience.runningtime(end)
+                            ratexperience.leaky_intigrator_Rrate(i) = (ratexperience.leaky_intigrator_Rrate(i-1))*exp((-1/tau)) + ratexperience.TIME_based_outcome(i); 
+                            ratexperience.avgRew_RL_Rrate(i) = nu*(ratexperience.TIME_based_outcome(i)) + (1-nu)*ratexperience.avgRew_RL_Rrate(i-1);
+                        end
+                        ratexperience.leaky_intigrator_TRIAL_Rrate = ratexperience.leaky_intigrator_Rrate(ratexperience.runningtime);
+                        ratexperience.avgRew_RL_TRIAL_Rrate = ratexperience.avgRew_RL_Rrate(ratexperience.runningtime);
+                        
+                        ratexperience.behavData.CNIlatency=double(ratexperience.behavData.CNIlatency);
+                        ratexperience.behavData.CNIlatency(ratexperience.behavData.CNIlatency==0)=nan;
+                        la = [ratexperience.leaky_intigrator_TRIAL_Rrate' ratexperience.avgRew_RL_TRIAL_Rrate' [log10(ratexperience.behavData.CNIlatency(trial_rows))]];
+                        la((isnan(la(:,3))),:)=[];
+
+                        ratexperience.leaky_corr_to_lat = corr(la(:,1),la(:,3));
+                        ratexperience.avgRew_RL_corr_to_lat = corr(la(:,2),la(:,3));
+                        ratexperience.avgRew_RL_TRIAL_Rrate = (ratexperience.avgRew_RL_TRIAL_Rrate - min(ratexperience.avgRew_RL_TRIAL_Rrate))./ (max(ratexperience.avgRew_RL_TRIAL_Rrate) -min(ratexperience.avgRew_RL_TRIAL_Rrate));
+                    end
+
+end
+
+
+
+

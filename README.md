@@ -1,4 +1,4 @@
-# berkeimport
+# berke
 Initial Codes for Terminal Inhibition Project
 
 Function:

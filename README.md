@@ -1,9 +1,5 @@
 # berke
-Initial Codes for Terminal Inhibition Project
-
-Function:
-Reads LabVIEW log files that work with MATLAB
-Works with both GLR and Rigs (they have different readouts)
+Codes for Terminal Inhibition Project
 
 Notes/Edits:
 Photometry rats in the Rig

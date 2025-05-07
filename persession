@@ -1,0 +1,26 @@
+count=1;
+clear input_list
+for j=1:length(Allratexp)
+    ratexperience=Allratexp(j);
+
+    h=figure('units','pixels','Position',[100 50 2300 1500], 'Visible', 'off'); % [left bottom width height]
+
+    PlotOptoBehSummary(ratexperience);
+
+    set(h,'color','w')
+    set(h,'Units','inches');
+    screenposition = get(h,'Position');
+    set(gcf,'PaperPosition',[0 0 screenposition(3:4)],'PaperSize',[screenposition(3:4)]);
+    print('-dpdf','-painters',[ratexperience.behavData.subject{1,1} '_' ratexperience.behavData.date{1,1} '_' datestr(now, 'yyyy-mm-dd')])
+
+    input_list{count}=[ratexperience.behavData.subject{1,1} '_' ratexperience.behavData.date{1,1} '_' datestr(now, 'yyyy-mm-dd') '.pdf'];
+
+    close(h)
+    clear h
+    count=count+1;
+end
+
+append_pdfs(['DAT_Opto_Compile_All_' datestr(now, 'yyyy-mm-dd') '.pdf'], input_list{:})
+for file=1:length(input_list)
+    delete(input_list{file})
+end

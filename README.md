@@ -1,5 +1,4 @@
-# berke
-Codes for Terminal Inhibition Project
+# Codes for Terminal Inhibition Project
 
 Notes/Edits:
 Photometry rats in the Rig
